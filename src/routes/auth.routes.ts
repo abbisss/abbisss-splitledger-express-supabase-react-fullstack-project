@@ -18,7 +18,22 @@ router.post("/login", async (req, res) => {
     });
   }
 
-  res.json(data.session);
+  res.status(200).json(data.session);
+});
+
+//POST /auth/logout
+router.post("/logout", async (req, res) => {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+
+  res.status(200).json({
+    message: "Logged out successfully",
+  });
 });
 
 export default router;
