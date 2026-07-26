@@ -101,3 +101,45 @@ export const updateUser = async (req: Request, res: Response) => {
 
   res.status(200).json(data);
 };
+
+//POST /users/sync
+export const syncUser = async (req: Request, res: Response) => {
+  const { auth_id, email, name, phone } = req.body;
+
+  if (!auth_id || !email) {
+    return res.status(400).json({
+      message: "auth_id and email are required",
+    });
+  }
+
+  const { data: existingUser, error: findError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("auth_id", auth_id)
+    .single();
+
+  if (existingUser) {
+    return res.status(200).json(existingUser);
+  }
+
+  const { data, error } = await supabase
+    .from("users")
+    .insert([
+      {
+        auth_id,
+        email,
+        name,
+        phone: phone || null,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+
+  return res.status(201).json(data);
+};
