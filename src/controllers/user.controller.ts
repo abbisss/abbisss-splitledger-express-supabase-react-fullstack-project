@@ -20,6 +20,31 @@ export const getUser = async (req: Request, res: Response) => {
   res.json(data);
 };
 
+//GET /users/me
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const authId = req.user?.id;
+
+  if (!authId) {
+    return res.status(401).json({
+      message: "Unauthorized",
+    });
+  }
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("auth_id", authId)
+    .single();
+
+  if (error) {
+    return res.status(404).json({
+      message: error.message,
+    });
+  }
+
+  res.json(data);
+};
+
 //POST /users
 export const createUser = async (req: Request, res: Response) => {
   const { email, password, name, phone } = req.body;
