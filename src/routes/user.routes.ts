@@ -4,6 +4,7 @@ import {
   createUser,
   updateUser,
   syncUser,
+  getCurrentUser,
 } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
@@ -11,6 +12,8 @@ const router = Router();
 
 //GET /users/:id
 router.get("/:id", authMiddleware, getUser);
+
+router.get("/me", authMiddleware, getCurrentUser);
 
 //POST /users
 router.post("/", createUser);
