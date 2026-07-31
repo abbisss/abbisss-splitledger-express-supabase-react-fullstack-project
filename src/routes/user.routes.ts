@@ -5,6 +5,7 @@ import {
   updateUser,
   syncUser,
   getCurrentUser,
+  searchUsers,
 } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
@@ -12,6 +13,9 @@ const router = Router();
 
 //GET /users/me
 router.get("/me", authMiddleware, getCurrentUser);
+
+//GET /users/search?name=
+router.get("/search", authMiddleware, searchUsers);
 
 //GET /users/:id
 router.get("/:id", authMiddleware, getUser);

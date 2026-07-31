@@ -20,6 +20,31 @@ export const getUser = async (req: Request, res: Response) => {
   res.json(data);
 };
 
+//GET /users/search?name=
+export const searchUsers = async (req: Request, res: Response) => {
+  const { name } = req.query;
+
+  if (!name) {
+    return res.status(400).json({
+      message: "Name is required",
+    });
+  }
+
+  const { data: users, error } = await supabase
+    .from("users")
+    .select("id, name, email, profile_picture")
+    .ilike("name", `%${name}%`)
+    .limit(10);
+
+  if (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+
+  return res.status(200).json(users);
+};
+
 //GET /users/me
 export const getCurrentUser = async (req: Request, res: Response) => {
   const authId = req.user?.id;
