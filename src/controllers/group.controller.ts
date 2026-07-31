@@ -182,3 +182,50 @@ export const updateGroup = async (req: Request, res: Response) => {
 
   return res.status(200).json(updatedGroup);
 };
+
+//DELETE /groups/:id
+export const deleteGroup = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const authId = req.user?.id;
+  if (!authId) {
+    return res.status(401).json({
+      message: "Unauthorized",
+    });
+  }
+
+  const userId = await getUserId(authId);
+
+  const { data: group, error: groupError } = await supabase
+    .from("groups")
+    .select("owner_id")
+    .eq("id", id)
+    .single();
+
+  if (groupError || !group) {
+    return res.status(404).json({
+      message: "Group not found",
+    });
+  }
+
+  if (group.owner_id !== userId) {
+    return res.status(403).json({
+      message: "Only the owner can delete the group",
+    });
+  }
+
+  const { error } = await supabase
+    .from("groups")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+
+  return res.status(200).json({
+    message: "Group deleted successfully",
+  });
+};

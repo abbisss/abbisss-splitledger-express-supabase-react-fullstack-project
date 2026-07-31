@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createGroup, getGroupById, getGroups, updateGroup } from "../controllers/group.controller.js";
+import { createGroup, deleteGroup, getGroupById, getGroups, updateGroup } from "../controllers/group.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -15,5 +15,8 @@ router.post("/", authMiddleware, createGroup);
 
 //PUT /groups/:id
 router.put("/:id", authMiddleware, updateGroup)
+
+//DELETE /groups/:id
+router.delete("/:id", authMiddleware, deleteGroup);
 
 export default router;
