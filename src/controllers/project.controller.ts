@@ -130,11 +130,24 @@ export const getProject = async (req: Request, res: Response) => {
     });
   }
 
+  const { data: group, error: groupError } = await supabase
+    .from("groups")
+    .select("owner_id")
+    .eq("id", project.group_id)
+    .single();
+
+  if (groupError) {
+    return res.status(500).json({
+      message: groupError.message,
+    });
+  }
+
   return res.status(200).json({
     project,
     members,
     expenses,
     payments,
+    ownerId: group.owner_id,
   });
 };
 

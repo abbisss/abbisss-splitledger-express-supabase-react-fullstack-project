@@ -121,8 +121,8 @@ export const getBalances = async (req: Request, res: Response) => {
   });
 };
 
-//GET /projects/:id/debts
-export const getDebts = async (req: Request, res: Response) => {
+//PUT /projects/:id/calculate-debts
+export const calculateDebts = async (req: Request, res: Response) => {
   const authId = req.user?.id;
   if (!authId) {
     return res.status(401).json({
@@ -141,7 +141,7 @@ export const getDebts = async (req: Request, res: Response) => {
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("group_id")
+    .select("group_id, settlements_calculated")
     .eq("id", projectId)
     .single();
   if (projectError || !project) {
@@ -159,6 +159,12 @@ export const getDebts = async (req: Request, res: Response) => {
   if (membershipError || !membership) {
     return res.status(403).json({
       message: "You are not a member of this group",
+    });
+  }
+
+  if (project.settlements_calculated) {
+    return res.status(400).json({
+      message: "Settlements already calculated",
     });
   }
 
@@ -259,7 +265,7 @@ export const getDebts = async (req: Request, res: Response) => {
       );
     }
   });
-  
+
   const debtors: {
     userId: string;
     name: string;
@@ -292,7 +298,9 @@ export const getDebts = async (req: Request, res: Response) => {
 
   const debts: {
     from: string;
+    fromId: string;
     to: string;
+    toId: string;
     amount: number;
   }[] = [];
 
@@ -307,7 +315,9 @@ export const getDebts = async (req: Request, res: Response) => {
 
     debts.push({
       from: debtor.name,
+      fromId: debtor.userId,
       to: receiver.name,
+      toId: receiver.userId,
       amount: Number(amount.toFixed(2)),
     });
 
@@ -323,7 +333,37 @@ export const getDebts = async (req: Request, res: Response) => {
     }
   }
 
+  const { error: paymentsInsertError } = await supabase.from("payments").insert(
+    debts.map((debt) => ({
+      project_id: projectId,
+      payer_id: debt.fromId,
+      receiver_id: debt.toId,
+      amount: debt.amount,
+      status: "pending",
+    })),
+  );
+
+  if (paymentsInsertError) {
+    return res.status(500).json({
+      message: paymentsInsertError.message,
+    });
+  }
+
+  const { error: updateError } = await supabase
+    .from("projects")
+    .update({
+      settlements_calculated: true,
+    })
+    .eq("id", projectId);
+
+  if (updateError) {
+    return res.status(500).json({
+      message: updateError.message,
+    });
+  }
+
   return res.status(200).json({
     debts,
   });
 };
+
